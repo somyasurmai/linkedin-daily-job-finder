@@ -22,7 +22,7 @@ The daily email digest shows:
 - Sorted by score, highest first
 - One-click Apply button per job
   
-<img width="739" height="1600" alt="image" src="https://github.com/user-attachments/assets/14db0041-5e6a-4cd2-a6a5-e9044aac0e8c" />
+<img width="370" alt="Daily Job Digest Email" src="https://github.com/user-attachments/assets/14db0041-5e6a-4cd2-a6a5-e9044aac0e8c" />
 
 ## Prerequisites
 
