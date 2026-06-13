@@ -1,0 +1,786 @@
+{
+  "name": "Job Application Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        464
+      ],
+      "id": "80e3bdd9-413e-4c3c-921c-0edd6e513e3b",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/actors/curious_coder~linkedin-jobs-scraper/runs?token=YOUR_APIFY_TOKEN_HERE",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"urls\": [\n    \"https://www.linkedin.com/jobs/search/?keywords=%22Learning+%26+Development%22&location=Germany&f_TPR=r86400&f_E=1,2,3&f_JT=F,I,C\",\n    \"https://www.linkedin.com/jobs/search/?keywords=%22HR+Specialist%22&location=Germany&f_TPR=r86400&f_E=1,2,3&f_JT=F,I,C\",\n    \"https://www.linkedin.com/jobs/search/?keywords=%22Learning+%26+Development%22&location=France&f_TPR=r86400&f_E=1,2,3&f_JT=F,I,C\",\n    \"https://www.linkedin.com/jobs/search/?keywords=%22HR+Specialist%22&location=France&f_TPR=r86400&f_E=1,2,3&f_JT=F,I,C\"\n  ],\n  \"rows\": 1,\n  \"count\": 50,\n  \"scrapeCompany\": false,\n  \"splitByLocation\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        464
+      ],
+      "id": "81a1a92f-5ddc-4b9c-9cb7-268c9f656a1c",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        464
+      ],
+      "id": "bf479e11-5ccd-4d6f-b8f9-d59ecc53780d",
+      "name": "Wait",
+      "webhookId": "6f493343-bb80-4d05-a599-45f728db80b7"
+    },
+    {
+      "parameters": {
+        "url": "https://api.apify.com/v2/actors/curious_coder~linkedin-jobs-scraper/runs/last/dataset/items?token=YOUR_APIFY_TOKEN_HERE",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        672,
+        464
+      ],
+      "id": "07571eee-6f44-4a9a-9c24-a7636cd501f9",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a job matching assistant. Your only job is to evaluate \nwhether a candidate is eligible and competitive for a role, \nthen return a structured JSON result.\n\n━━━ WHO THE CANDIDATE IS ━━━\nName: candidate\nEducation:\n- Bachelor of Technology, Computer Science Engineering (STEM)\n- Master's in HR/Management (2026 graduate)\n\nExperience (3.5 years total):\n- Data Analytics: 8 months\n- Product Manager, e-commerce tech company: 1.5 years\n- L&D Specialist apprenticeship, L'Oréal Luxe: 1 year\n\nMaster's research: employee trust propensity and AI adoption.\n\nLanguages:\n- English: fully fluent\n- French: B2 intermediate\n- German: none\n\n━━━ TARGET ROLES ━━━\nEvaluate the FUNCTION of the role, not just the title.\n\nPriority 1 — L&D / Learning functions:\nTitles include but not limited to: Learning & Development\nSpecialist, Learning Specialist, Learning Manager, Digital\nLearning Specialist, Talent Development Specialist, Learning\nDesigner, Training Specialist, Capability Development,\nLearning Operations, People Development Specialist,\nInstructional Designer with L&D scope\n\nPriority 2 — PM in HR Tech / Ed Tech / Any Tech:\nTitles include: Associate Product Manager, Junior Product\nManager, Product Analyst, Product Owner (entry level) —\nany domain is acceptable, not just HR or learning\n\nPriority 3 — Founder's Associate:\nOperational/strategic generalist role at early-stage or\ngrowth-stage startups. Titles include: Founder's Associate,\nChief of Staff, Strategy Associate, Venture Associate,\nOperations Associate reporting to founder/CEO.\nEnglish working language required.\nCandidate's PM + analytics + L&D background is strong fit.\n\nPriority 4 — HR Graduate Programs / HR Specialist:\nGraduate rotational programs at large companies covering\nHR, L&D, People Analytics, or Talent functions.\nHR Specialist roles at mid to large companies.\n\nPriority 5 — Business Analyst / Data Analyst / HR Analyst:\nTitles include: Business Analyst, HR Data Analyst, People\nAnalytics Analyst, HR Technology Analyst, Workforce\nAnalytics, HR Systems Analyst, HR Analyst — entry to mid\nlevel only\n\nPriority 6 — Change Management / OD / Enablement:\nTitles include: Change Management Analyst, Organisational\nDevelopment Specialist, Enablement Specialist, HR Change\nConsultant — entry to mid level only\n\n━━━ HARD NOs — exclude immediately, return score 0 ━━━\n- Vocational training / Weiterbildung / Jobcenter programs\n- Werkstudent roles\n- Alternance, or apprenticeship of any kind\n- Senior, Director, Head of, VP, C-suite titles, Lead\n- Pure sales roles with no L&D or product component\n- Roles outside Europe\n- Master's in CS/Engineering as non-negotiable requirement\n- Roles requiring 5+ years experience\n- Any language other than English or French as sole\n  working language with no mention of English\n- Credit analyst, loan underwriting, financial analysis\n  roles — pure finance function, not relevant\n- Train driver, railway operations, nursing, healthcare\n  clinical roles, kindergarten/childcare workers —\n  vocational roles not relevant\n\n━━━ EXPERIENCE MATCHING ━━━\nMatch required experience against candidate's actual\nexperience. Read the FULL requirement — if a role says\n\"3 years as Business Analyst or similar\", candidate's\nPM + analytics experience satisfies it.\n\nWhen JD says \"we encourage you to apply even if you don't\nmeet 100% of requirements\" — treat experience requirement\nas one level more lenient.\n\nFunction       | 0-2 yrs req | 2-3 yrs req | 3-5 yrs req\nL&D            | Strong      | Weak        | Weak\nPM (any domain)| Strong      | Strong      | Weak\nAnalytics/BA   | Strong      | Strong      | Strong\nHR/Change      | Strong      | Weak        | Weak\nFounder's Assoc| Strong      | Strong      | Weak\n\nIf experience requirement is not specified → treat as 0-2,\nscore as Strong.\nIf role requires 5+ years in any function → hard no.\n\n━━━ CONTRACT PRIORITY ━━━\nCDI → highest priority\nCDD → acceptable\nInternship → low priority, include but rank lower\nWerkstudent / apprenticeship → hard no, exclude\n\n━━━ SCORING ━━━\n\nStep 1 — Function and title fit (0-40 pts):\nEvaluate what the role actually does, not just the title.\nPriority 1 function (L&D/Learning) → 32-40 pts\nPriority 2 function (PM any domain) → 30-38 pts\nPriority 3 function (Founder's Associate) → 28-36 pts\nPriority 4 function (HR Graduate/Specialist) → 24-30 pts\nPriority 5 function (BA/Analytics) → 20-28 pts\nPriority 6 function (Change/OD/Enablement) → 16-24 pts\nPoor function match → 0-15 pts\n\nStep 2 — Experience fit (0-20 pts):\nUse the experience matching table above.\nStrong → 20 pts\nWeak → 10 pts\nExclude → 0 pts, hard no\n\nStep 3 — Language fit (0-20 pts):\nEnglish JD, no language requirement → 20\nEnglish JD, French required or preferred → 18\nEnglish JD, German required → 14\nGerman JD but explicitly states English is the working\n  language or English is required → 16\nFrench-only JD → 13\nGerman-only JD → 6\nAny other language only → 0, exclude\n\nStep 4 — Location fit (0-15 pts):\nTier 1 — Berlin, Munich, Hamburg, Frankfurt, Düsseldorf,\n  Stuttgart, Cologne, Leipzig, Dresden, Nuremberg,\n  Hannover → 15\nTier 2 — Paris, Île-de-France, Amsterdam, Zurich, Geneva,\n  Basel, Luxembourg → 12\nTier 3 — Lyon, Marseille, Toulouse, Bordeaux, Lille,\n  Strasbourg, Brussels, Dublin, Stockholm, Copenhagen,\n  Barcelona, Lisbon → 8\nRemote EU → 6\nOther EU city not listed → 5\nOutside EU → 0, exclude\n\nStep 5 — Brand bonus (0-5 pts):\nTop tech: NVIDIA, Google, Microsoft, Amazon, Apple, Meta,\n  Salesforce, SAP, Workday, Oracle, IBM → 5\nTop luxury/beauty: L'Oréal, Estée Lauder, LVMH, Dior,\n  Chanel, Hermès, Kering, Coty, Puig, Sephora, Givenchy,\n  Lancôme, Yves Saint Laurent → 5\nTop consulting: McKinsey, BCG, Bain, Deloitte, Accenture,\n  PwC, KPMG, EY → 4\nOther known tech or consulting company → 2\nUnknown or small company → 0\n\nFinal score = Step 1 + Step 2 + Step 3 + Step 4 + Step 5\nMaximum = 100\n\n━━━ CLASSIFICATION ━━━\nScore 65-100 → STRONG MATCH\nScore 45-64 → ALSO WORTH CONSIDERING\nScore 0-44 → EXCLUDE\nHard no triggered → EXCLUDE\n\n━━━ CONTRACT ADJUSTMENT ━━━\nIf contract is internship → subtract 5 pts from final score\n\n━━━ OUTPUT FORMAT RULES ━━━\nAll fields must be short and Excel-friendly — no paragraphs,\nno line breaks, no long sentences except matchReason.\n\nField length rules:\n\"title\" → exact job title, max 60 chars\n\"company\" → company name only, max 40 chars\n\"location\" → City, Country only\n\"posted\" → date only e.g. \"2026-06-08\"\n\"contractType\" → \"CDI\" / \"CDD\" / \"Internship\" / \"Graduate Program\"\n\"function\" → max 5 words\n\"title_match\" → max 6 words\n\"experience\" → max 8 words\n\"language\" → max 5 words\n\"location_tier\" → max 4 words\n\"brand\" → max 4 words\n\"url\" → full URL, no truncation\n\"matchReason\" → 2 sentences max, only field allowed to be\n  full paragraph\n\"section\" → \"STRONG MATCH\" or \"ALSO WORTH CONSIDERING\"\n  or \"EXCLUDE\"\n\"score\" → number only\n\nFor STRONG MATCH or ALSO WORTH CONSIDERING:\n{\n  \"score\": 75,\n  \"section\": \"STRONG MATCH\",\n  \"title\": \"use job_title field provided\",\n  \"company\": \"use job_company field provided\",\n  \"location\": \"City, Country only\",\n  \"posted\": \"use job_posted field provided\",\n  \"contractType\": \"CDI / CDD / Internship / Graduate Program\",\n  \"function\": \"max 5 words\",\n  \"title_match\": \"max 6 words\",\n  \"experience\": \"X years required in [function] — Strong/Weak\",\n  \"language\": \"max 5 words\",\n  \"location_tier\": \"max 4 words\",\n  \"brand\": \"max 4 words\",\n  \"url\": \"use job_url field provided\",\n  \"matchReason\": \"2 sentences specific to this candidate\"\n}\n\nFor EXCLUDE:\n{\n  \"score\": 0,\n  \"section\": \"EXCLUDE\",\n  \"title\": \"use job_title field provided\",\n  \"company\": \"use job_company field provided\",\n  \"location\": \"City, Country only\",\n  \"posted\": \"use job_posted field provided\",\n  \"contractType\": \"CDI / CDD / Internship / Graduate Program\",\n  \"function\": \"max 5 words\",\n  \"title_match\": \"max 6 words\",\n  \"experience\": \"max 8 words\",\n  \"language\": \"max 5 words\",\n  \"location_tier\": \"max 4 words\",\n  \"brand\": \"max 4 words\",\n  \"url\": \"use job_url field provided\",\n  \"matchReason\": \"one line — why excluded\"\n}\n\n━━━ CRITICAL ━━━\nReturn valid JSON only. No text before or after.\nNo markdown. No backticks.\nThe downstream system parses this directly.\n\njob_description: {{ $json.descriptionText }}\njob_url: {{ $json.link }}\njob_title: {{ $json.title }}\njob_company: {{ $json.companyName }}\njob_location: {{ $json.location }}\njob_posted: {{ $json.postedAt }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1344,
+        -16
+      ],
+      "id": "2e8a0cba-ae1d-4ae4-ab83-0ddba60a51bf",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-4-6",
+          "mode": "list",
+          "cachedResultName": "Claude Sonnet 4.6"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.5,
+      "position": [
+        1424,
+        208
+      ],
+      "id": "44681199-6187-4e0d-83b1-f5185909abc1",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "ovkWdGtjZpINrm1E",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d8a9e1a9-937b-4879-9dbc-0d5a81b8fa63",
+              "leftValue": "={{ $json.score }}",
+              "rightValue": "=45",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1920,
+        96
+      ],
+      "id": "b8511631-0b7b-4708-98b2-933c7cd3b768",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR EMAIL",
+        "subject": "=Jobs to apply — {{ $now.format('yyyy-MM-dd') }}",
+        "message": "=<html>\n<body style=\"font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #333;\">\n\n<h2 style=\"color: #0077B5; border-bottom: 2px solid #0077B5; padding-bottom: 10px;\">\n  🎯 Daily Job Digest — {{ $now.format('yyyy-MM-dd') }}\n</h2>\n\n{{ $json.jobs.sort((a, b) => {\n  if (a.CATEGORY === 'STRONG MATCH' && b.CATEGORY !== 'STRONG MATCH') return -1;\n  if (a.CATEGORY !== 'STRONG MATCH' && b.CATEGORY === 'STRONG MATCH') return 1;\n  return b.SCORE - a.SCORE;\n}).map(item => `\n<div style=\"margin-bottom: 20px; padding: 15px; border-radius: 8px; border-left: 4px solid ${item.CATEGORY === 'STRONG MATCH' ? '#28a745' : '#ffc107'}; background-color: ${item.CATEGORY === 'STRONG MATCH' ? '#f0fff4' : '#fffdf0'};\">\n  <div style=\"display: flex; justify-content: space-between; align-items: center;\">\n    <span style=\"font-weight: bold; font-size: 16px;\">${item.TITLE}</span>\n    <span style=\"padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; background-color: ${item.CATEGORY === 'STRONG MATCH' ? '#28a745' : '#ffc107'}; color: ${item.CATEGORY === 'STRONG MATCH' ? 'white' : '#333'};\">\n      ${item.CATEGORY} — Score: ${item.SCORE}\n    </span>\n  </div>\n  <div style=\"margin-top: 5px; color: #555;\">\n    🏢 ${item.COMPANY} &nbsp;|&nbsp; 📍 ${item.LOCATION} &nbsp;|&nbsp; 📅 ${item.POSTED}\n  </div>\n  <div style=\"margin-top: 5px; color: #555;\">\n    📄 Contract: ${item.CONTRACT} &nbsp;|&nbsp; 🌐 Language: ${item.LANGUAGE}\n  </div>\n  <div style=\"margin-top: 5px; color: #666; font-style: italic; font-size: 13px;\">\n    ${item['MATCH REASON'] || ''}\n  </div>\n  <div style=\"margin-top: 10px;\">\n    <a href=\"${item.URL}\" style=\"background-color: #0077B5; color: white; padding: 6px 14px; text-decoration: none; border-radius: 4px; font-size: 13px;\">\n      Apply on LinkedIn →\n    </a>\n  </div>\n</div>\n`).join('')}}\n\n<hr style=\"margin-top: 30px;\">\n<p style=\"color: #999; font-size: 12px; text-align: center;\">\n  Generated by your Job Search Agent • {{ $now.format('yyyy-MM-dd') }}\n</p>\n\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1488,
+        560
+      ],
+      "id": "8e0f2fe2-bdb6-47c7-8ac2-469c2dcb99d6",
+      "name": "Send a message",
+      "webhookId": "35570fa2-3243-4cf2-9041-32a8503327ed",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "8wqdN4kbth6lPb1W",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "jobs",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        560
+      ],
+      "id": "56f969d2-da4d-44ff-b2da-dd09d14132f1",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1yAYSF_UjVH7yqQB-XLtAaU7WhNSouK9l0e4cel6p4Yc/edit?pli=1&gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yAYSF_UjVH7yqQB-XLtAaU7WhNSouK9l0e4cel6p4Yc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "DATE": "={{ $now.format('yyyy-MM-dd') }}",
+            "TITLE": "={{ $json.title }}",
+            "COMPANY": "={{ $json.company }}",
+            "LOCATION": "={{ $json.location }}",
+            "SCORE": "={{ $json.score }}",
+            "CATEGORY": "={{ $json.section }}",
+            "CONTRACT": "={{ $json.contractType }}",
+            "LANGUAGE": "={{ $json.language }}",
+            "POSTED": "={{ $json.posted }}",
+            "STATUS": "Backlog",
+            "URL": "={{ $json.url }}",
+            "MATCH REASON": "={{ $json.matchReason }}"
+          },
+          "matchingColumns": [
+            "DATE"
+          ],
+          "schema": [
+            {
+              "id": "DATE",
+              "displayName": "DATE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "TITLE",
+              "displayName": "TITLE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "COMPANY",
+              "displayName": "COMPANY",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LOCATION",
+              "displayName": "LOCATION",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "SCORE",
+              "displayName": "SCORE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CATEGORY",
+              "displayName": "CATEGORY",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CONTRACT",
+              "displayName": "CONTRACT",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LANGUAGE",
+              "displayName": "LANGUAGE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "POSTED",
+              "displayName": "POSTED",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "MATCH REASON",
+              "displayName": "MATCH REASON",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "STATUS",
+              "displayName": "STATUS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "output",
+              "displayName": "output",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2144,
+        576
+      ],
+      "id": "190fcda2-314d-46aa-8b02-d799111a089c",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RC4ANdmP4wRACbZ7",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1yAYSF_UjVH7yqQB-XLtAaU7WhNSouK9l0e4cel6p4Yc/edit?pli=1&gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yAYSF_UjVH7yqQB-XLtAaU7WhNSouK9l0e4cel6p4Yc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "DATE": "={{ $now.format('yyyy-MM-dd') }}",
+            "TITLE": "={{ $json.title }}",
+            "COMPANY": "={{ $json.company}}",
+            "LOCATION": "={{ $json.location }}",
+            "SCORE": "={{ $json.score }}",
+            "CONTRACT": "={{ $json.contractType }}",
+            "LANGUAGE": "={{ $json.language }}",
+            "POSTED": "={{ $json.posted }}",
+            "URL": "={{ $json.url }}",
+            "STATUS": "To Apply",
+            "CATEGORY": "={{ $json.section }}",
+            "MATCH REASON": "={{ $json.matchReason }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "DATE",
+              "displayName": "DATE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "TITLE",
+              "displayName": "TITLE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "COMPANY",
+              "displayName": "COMPANY",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LOCATION",
+              "displayName": "LOCATION",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "SCORE",
+              "displayName": "SCORE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CATEGORY",
+              "displayName": "CATEGORY",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "CONTRACT",
+              "displayName": "CONTRACT",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LANGUAGE",
+              "displayName": "LANGUAGE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "POSTED",
+              "displayName": "POSTED",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "MATCH REASON",
+              "displayName": "MATCH REASON",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "STATUS",
+              "displayName": "STATUS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2144,
+        304
+      ],
+      "id": "3358b303-8896-4487-ab22-9252f8f57ca7",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RC4ANdmP4wRACbZ7",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $input.item.json.output;\nconst clean = raw.replace(/```json|```/g, '').trim();\nconst parsed = JSON.parse(clean);\nreturn { json: parsed };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        96
+      ],
+      "id": "59d73ae8-29a2-4149-906f-ea49e52977e8",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        896,
+        464
+      ],
+      "id": "1d93daab-53b7-46a8-a15b-fd0952a51e9b",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        96
+      ],
+      "id": "082659f6-6d0b-4706-b80f-175c074b1680",
+      "name": "Wait2",
+      "webhookId": "cfaad3cd-abae-4de3-ba1c-1dc77f59b861"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d8a9e1a9-937b-4879-9dbc-0d5a81b8fa63",
+              "leftValue": "={{ $json.SCORE }}",
+              "rightValue": "=45",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1104,
+        560
+      ],
+      "id": "f95db44e-6cf4-42e5-8f60-735496b3357d",
+      "name": "If1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5d11f868-e406-4d45-a3d7-047e79a76388",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f794c193c278628047d88c0d6692ae00f644f3cf14340916e1ff2e6288a09fac"
+  },
+  "nodeGroups": [],
+  "id": "j2ApVyuPeQVq52k1",
+  "tags": []
+}
