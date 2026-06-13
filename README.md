@@ -36,9 +36,9 @@ You will need free accounts on the following services:
 
 
 After importing the workflow, you need to add your own credentials in n8n:
-Apify: Add your API token to the HTTP Request nodes
-Anthropic: Connect your Anthropic account in the Anthropic Chat Model node
-Google: Connect your Google account for Gmail and Google Sheets
+- Apify: Add your API token to the HTTP Request nodes
+- Anthropic: Connect your Anthropic account in the Anthropic Chat Model node
+- Google: Connect your Google account for Gmail and Google Sheets
 
 ## Setup
 
